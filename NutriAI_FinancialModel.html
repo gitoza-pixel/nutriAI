@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NutriAI — Financial Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g1:#1B5E20;--g2:#2E7D32;--g3:#43A047;--g4:#81C784;--g5:#C8E6C9;--g6:#E8F5E9;
+  --dark:#1A2E1A;--mid:#4A6741;--light:#7A9B77;--white:#FFFFFF;--cream:#FAFDF7;
+  --gold:#F59E0B;--coral:#FF7043;--blue:#1E88E5;--purple:#7B1FA2;--teal:#00897B;
+  --red:#C62828;--orange:#E65100;
+  --r:18px;--rs:12px;
+  --sh:0 4px 24px rgba(27,94,32,.10);
+  --sh-lg:0 8px 40px rgba(27,94,32,.15);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Quicksand',sans-serif;background:var(--cream);color:var(--dark);min-height:100vh;overflow-x:hidden}
+
+/* BG */
+.bg-canvas{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.07}
+.bg-orb:nth-child(1){width:500px;height:500px;background:var(--g3);top:-100px;left:-150px}
+.bg-orb:nth-child(2){width:400px;height:400px;background:var(--gold);top:60%;right:-100px}
+.bg-orb:nth-child(3){width:300px;height:300px;background:var(--blue);bottom:-80px;left:30%}
+
+/* LAYOUT */
+.wrapper{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 16px 60px}
+
+/* HEADER */
+.hdr{background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-bottom:1.5px solid var(--g5);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(27,94,32,.08);margin-bottom:28px}
+.logo-row{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px}
+.logo-text{font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;color:var(--g1)}
+.logo-badge{background:linear-gradient(135deg,var(--gold),#F6A623);color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:20px;letter-spacing:.6px;text-transform:uppercase;font-family:'Nunito',sans-serif}
+.hdr-title{font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:var(--mid);letter-spacing:.3px}
+
+/* HERO */
+.hero{text-align:center;padding:10px 0 28px}
+.hero h1{font-family:'Nunito',sans-serif;font-size:30px;font-weight:900;color:var(--dark);line-height:1.2;margin-bottom:8px}
+.hero h1 span{color:var(--g2)}
+.hero p{font-size:14px;color:var(--mid);font-weight:500;max-width:520px;margin:0 auto}
+
+/* SECTION TITLES */
+.sec-title{font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--light);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--g5)}
+
+/* INPUT GRID */
+.input-panel{background:rgba(255,255,255,.96);border-radius:var(--r);border:1.5px solid var(--g5);padding:22px;box-shadow:var(--sh);margin-bottom:22px}
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.input-grid{grid-template-columns:1fr}}
+.ig label{font-size:11px;font-weight:700;color:var(--mid);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.ig label span{color:var(--g3);font-family:'DM Mono',monospace;text-transform:none;letter-spacing:0;font-size:10px}
+.inp{width:100%;padding:12px 14px;border-radius:var(--rs);border:1.5px solid var(--g5);font-size:14px;font-family:'Quicksand',sans-serif;background:var(--g6);color:var(--dark);outline:none;transition:all .18s;font-weight:600}
+.inp:focus{border-color:var(--g3);background:#fff;box-shadow:0 0 0 3px rgba(67,160,71,.12)}
+.inp-note{font-size:10px;color:var(--light);margin-top:4px;font-weight:500}
+
+/* BUTTON */
+.calc-btn{width:100%;padding:16px;border-radius:var(--rs);background:linear-gradient(135deg,var(--g2),var(--g1));color:#fff;font-size:16px;font-weight:800;font-family:'Nunito',sans-serif;border:none;cursor:pointer;transition:all .22s;margin-top:6px;box-shadow:0 6px 22px rgba(27,94,32,.3);letter-spacing:.3px}
+.calc-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(27,94,32,.4)}
+.calc-btn:active{transform:translateY(0)}
+
+/* RESULTS */
+.results{display:none;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* METRIC CARDS */
+.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+@media(max-width:640px){.metrics-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:400px){.metrics-grid{grid-template-columns:1fr}}
+
+.metric-card{background:rgba(255,255,255,.97);border-radius:var(--r);border:1.5px solid var(--g5);padding:18px 16px;box-shadow:var(--sh);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.metric-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg)}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
+.metric-card.green::before{background:linear-gradient(90deg,var(--g3),var(--g4))}
+.metric-card.gold::before{background:linear-gradient(90deg,var(--gold),#FCD34D)}
+.metric-card.blue::before{background:linear-gradient(90deg,var(--blue),#64B5F6)}
+.metric-card.coral::before{background:linear-gradient(90deg,var(--coral),#FF8A65)}
+.metric-card.purple::before{background:linear-gradient(90deg,var(--purple),#CE93D8)}
+.metric-card.teal::before{background:linear-gradient(90deg,var(--teal),#4DB6AC)}
+.metric-card.red::before{background:linear-gradient(90deg,var(--red),#EF5350)}
+
+.metric-icon{font-size:22px;margin-bottom:8px}
+.metric-label{font-size:10px;font-weight:700;color:var(--light);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.metric-value{font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;color:var(--dark);line-height:1;margin-bottom:3px}
+.metric-sub{font-size:10px;color:var(--light);font-weight:600}
+
+/* HEALTH BAR */
+.health-panel{background:rgba(255,255,255,.96);border-radius:var(--r);border:1.5px solid var(--g5);padding:22px;box-shadow:var(--sh);margin-bottom:22px}
+.health-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.health-label{font-size:12px;font-weight:700;color:var(--mid);width:140px;flex-shrink:0}
+.health-bar-track{flex:1;height:10px;background:var(--g6);border-radius:10px;overflow:hidden}
+.health-bar-fill{height:100%;border-radius:10px;transition:width 1.2s cubic-bezier(.4,0,.2,1);min-width:4px}
+.health-val{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--mid);width:80px;text-align:right;flex-shrink:0}
+
+/* SCENARIOS */
+.scenarios-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:640px){.scenarios-grid{grid-template-columns:1fr}}
+
+.scenario-card{border-radius:var(--r);border:2px solid;padding:20px 16px;box-shadow:var(--sh);position:relative;overflow:hidden;transition:transform .2s}
+.scenario-card:hover{transform:translateY(-3px)}
+.scenario-card.conservative{background:rgba(255,255,255,.97);border-color:var(--blue)}
+.scenario-card.moderate{background:rgba(255,255,255,.97);border-color:var(--g3)}
+.scenario-card.aggressive{background:rgba(255,255,255,.97);border-color:var(--coral)}
+.scen-tag{display:inline-block;font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;font-family:'Nunito',sans-serif}
+.conservative .scen-tag{background:rgba(30,136,229,.1);color:var(--blue)}
+.moderate .scen-tag{background:rgba(67,160,71,.1);color:var(--g2)}
+.aggressive .scen-tag{background:rgba(255,112,67,.1);color:var(--coral)}
+.scen-name{font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;color:var(--dark);margin-bottom:4px}
+.scen-desc{font-size:11px;color:var(--light);margin-bottom:14px;font-weight:500;line-height:1.5}
+.scen-line{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--g5)}
+.scen-line:last-child{border-bottom:none}
+.scen-key{font-size:11px;color:var(--mid);font-weight:600}
+.scen-val{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--dark)}
+.scen-val.pos{color:var(--g2)}
+.scen-val.neg{color:var(--coral)}
+.scen-val.warn{color:var(--gold)}
+.scen-badge{position:absolute;top:14px;right:14px;font-size:18px}
+
+/* INSIGHTS */
+.insights-panel{background:rgba(255,255,255,.96);border-radius:var(--r);border:1.5px solid var(--g5);padding:22px;box-shadow:var(--sh);margin-bottom:22px}
+.insight-item{display:flex;gap:12px;padding:12px;border-radius:var(--rs);margin-bottom:8px;transition:background .15s}
+.insight-item:hover{background:var(--g6)}
+.insight-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.insight-text{font-size:13px;color:var(--mid);line-height:1.6;font-weight:500}
+.insight-text strong{color:var(--dark);font-weight:700}
+
+/* RECOMMENDATION */
+.rec-panel{border-radius:var(--r);background:linear-gradient(135deg,var(--g1),var(--g2));padding:24px;box-shadow:0 8px 32px rgba(27,94,32,.3);margin-bottom:22px;color:#fff;position:relative;overflow:hidden}
+.rec-panel::before{content:'💡';position:absolute;right:20px;bottom:10px;font-size:80px;opacity:.08}
+.rec-title{font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;margin-bottom:14px;opacity:.85;letter-spacing:.3px;text-transform:uppercase}
+.rec-items{list-style:none;display:flex;flex-direction:column;gap:10px}
+.rec-items li{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.6;opacity:.92;font-weight:500}
+.rec-items li::before{content:'→';font-weight:900;font-family:'Nunito',sans-serif;flex-shrink:0;margin-top:1px;opacity:.7}
+
+/* BREAK-EVEN CHART */
+.chart-panel{background:rgba(255,255,255,.96);border-radius:var(--r);border:1.5px solid var(--g5);padding:22px;box-shadow:var(--sh);margin-bottom:22px}
+.chart-wrap{position:relative;height:200px;margin-top:16px}
+.chart-svg{width:100%;height:100%}
+
+/* STATUS BADGE */
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:800;font-family:'Nunito',sans-serif;letter-spacing:.3px}
+.status-badge.profitable{background:rgba(46,125,50,.1);color:var(--g2)}
+.status-badge.loss{background:rgba(198,40,40,.1);color:var(--red)}
+.status-badge.breakeven{background:rgba(245,158,11,.1);color:#92400E}
+.status-dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* RISK TABLE */
+.risk-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.risk-table th{text-align:left;padding:8px 10px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--light);border-bottom:2px solid var(--g5)}
+.risk-table td{padding:10px 10px;border-bottom:1px solid var(--g5);color:var(--mid);font-weight:500}
+.risk-table tr:last-child td{border-bottom:none}
+.risk-table tr:hover td{background:var(--g6)}
+.risk-pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:.5px}
+.risk-low{background:rgba(67,160,71,.12);color:var(--g2)}
+.risk-med{background:rgba(245,158,11,.12);color:#92400E}
+.risk-high{background:rgba(255,112,67,.12);color:var(--coral)}
+
+/* FOOTER */
+.fin-footer{text-align:center;padding:20px 0 0;font-size:11px;color:var(--light);font-weight:500}
+.fin-footer strong{color:var(--g2)}
+</style>
+</head>
+<body>
+
+<div class="bg-canvas">
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="logo-row">
+    <svg class="logo-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="18" cy="20" rx="11" ry="13" fill="#2E7D32"/>
+      <ellipse cx="18" cy="20" rx="7" ry="9" fill="#A5D6A7"/>
+      <ellipse cx="18" cy="20" rx="3.5" ry="5" fill="#1B5E20"/>
+      <ellipse cx="20" cy="10" rx="3" ry="6" fill="#43A047" transform="rotate(20 20 10)"/>
+    </svg>
+    <div>
+      <div class="logo-text">NutriAI</div>
+    </div>
+    <div class="logo-badge">Finance</div>
+  </div>
+  <div class="hdr-title">Financial Intelligence Dashboard</div>
+</div>
+
+<div class="wrapper">
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>Model Your <span>Growth</span> Story</h1>
+    <p>Enter your business variables and get a full financial projection — revenue, profit, LTV/CAC, break-even, and strategic insights.</p>
+  </div>
+
+  <!-- INPUT PANEL -->
+  <div class="input-panel">
+    <div class="sec-title">Business Variables</div>
+    <div class="input-grid">
+      <div class="ig">
+        <label>Total Users <span>→ registered base</span></label>
+        <input class="inp" type="number" id="totalUsers" value="5000" min="1">
+        <div class="inp-note">All registered users (free + paid)</div>
+      </div>
+      <div class="ig">
+        <label>Monthly Price <span>→ per paying user ($)</span></label>
+        <input class="inp" type="number" id="monthlyPrice" value="12.99" min="0.01" step="0.01">
+        <div class="inp-note">Subscription fee per month</div>
+      </div>
+      <div class="ig">
+        <label>Conversion Rate <span>→ % paying</span></label>
+        <input class="inp" type="number" id="convRate" value="8" min="0.1" max="100" step="0.1">
+        <div class="inp-note">Typical SaaS: 2–15%</div>
+      </div>
+      <div class="ig">
+        <label>Monthly CAC <span>→ total acquisition spend ($)</span></label>
+        <input class="inp" type="number" id="cac" value="8000" min="0">
+        <div class="inp-note">Total monthly marketing spend</div>
+      </div>
+      <div class="ig">
+        <label>Fixed Monthly Costs <span>→ overheads ($)</span></label>
+        <input class="inp" type="number" id="fixedCosts" value="15000" min="0">
+        <div class="inp-note">Salaries, infra, rent, tools</div>
+      </div>
+      <div class="ig">
+        <label>Variable Cost/User <span>→ per total user ($)</span></label>
+        <input class="inp" type="number" id="varCost" value="0.80" min="0" step="0.01">
+        <div class="inp-note">AI compute, storage, support</div>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calculate()">🧮 Run Financial Model</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results" id="results">
+
+    <!-- STATUS -->
+    <div style="text-align:center;margin-bottom:20px">
+      <span class="status-badge" id="statusBadge"><span class="status-dot"></span><span id="statusText"></span></span>
+    </div>
+
+    <!-- METRICS GRID -->
+    <div class="sec-title">Core Financials</div>
+    <div class="metrics-grid">
+      <div class="metric-card green">
+        <div class="metric-icon">💰</div>
+        <div class="metric-label">Monthly Revenue</div>
+        <div class="metric-value" id="mRevenue">—</div>
+        <div class="metric-sub" id="mRevenueSub">—</div>
+      </div>
+      <div class="metric-card gold">
+        <div class="metric-icon">📅</div>
+        <div class="metric-label">Annual Revenue</div>
+        <div class="metric-value" id="aRevenue">—</div>
+        <div class="metric-sub" id="aRevenueSub">—</div>
+      </div>
+      <div class="metric-card coral">
+        <div class="metric-icon">📦</div>
+        <div class="metric-label">Total Monthly Costs</div>
+        <div class="metric-value" id="totalCosts">—</div>
+        <div class="metric-sub" id="totalCostsSub">—</div>
+      </div>
+      <div class="metric-card" id="profitCard">
+        <div class="metric-icon">📈</div>
+        <div class="metric-label">Net Monthly Profit</div>
+        <div class="metric-value" id="netProfit">—</div>
+        <div class="metric-sub" id="netProfitSub">—</div>
+      </div>
+      <div class="metric-card blue">
+        <div class="metric-icon">⚖️</div>
+        <div class="metric-label">Break-Even</div>
+        <div class="metric-value" id="breakEven">—</div>
+        <div class="metric-sub" id="breakEvenSub">—</div>
+      </div>
+      <div class="metric-card purple">
+        <div class="metric-icon">♾️</div>
+        <div class="metric-label">LTV / CAC Ratio</div>
+        <div class="metric-value" id="ltvCac">—</div>
+        <div class="metric-sub" id="ltvCacSub">—</div>
+      </div>
+    </div>
+
+    <!-- HEALTH BARS -->
+    <div class="health-panel">
+      <div class="sec-title">Financial Health Breakdown</div>
+      <div class="health-row">
+        <div class="health-label">Gross Margin</div>
+        <div class="health-bar-track"><div class="health-bar-fill" id="bar1" style="background:linear-gradient(90deg,#43A047,#81C784)"></div></div>
+        <div class="health-val" id="val1">—</div>
+      </div>
+      <div class="health-row">
+        <div class="health-label">Paying Users</div>
+        <div class="health-bar-track"><div class="health-bar-fill" id="bar2" style="background:linear-gradient(90deg,#1E88E5,#64B5F6)"></div></div>
+        <div class="health-val" id="val2">—</div>
+      </div>
+      <div class="health-row">
+        <div class="health-label">LTV/CAC Health</div>
+        <div class="health-bar-track"><div class="health-bar-fill" id="bar3" style="background:linear-gradient(90deg,#7B1FA2,#CE93D8)"></div></div>
+        <div class="health-val" id="val3">—</div>
+      </div>
+      <div class="health-row">
+        <div class="health-label">Revenue Growth Pot.</div>
+        <div class="health-bar-track"><div class="health-bar-fill" id="bar4" style="background:linear-gradient(90deg,#F59E0B,#FCD34D)"></div></div>
+        <div class="health-val" id="val4">—</div>
+      </div>
+      <div class="health-row">
+        <div class="health-label">Cost Efficiency</div>
+        <div class="health-bar-track"><div class="health-bar-fill" id="bar5" style="background:linear-gradient(90deg,#00897B,#4DB6AC)"></div></div>
+        <div class="health-val" id="val5">—</div>
+      </div>
+    </div>
+
+    <!-- BREAK-EVEN CHART -->
+    <div class="chart-panel">
+      <div class="sec-title">Revenue vs Cost Projection (12 Months)</div>
+      <div class="chart-wrap">
+        <svg class="chart-svg" id="chartSvg" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:11px;font-weight:600;color:var(--mid)">
+        <span>🟢 Revenue</span><span>🔴 Total Costs</span><span>🔵 Net Profit</span>
+      </div>
+    </div>
+
+    <!-- SCENARIOS -->
+    <div class="sec-title">Growth Scenario Comparison</div>
+    <div class="scenarios-grid">
+      <div class="scenario-card conservative">
+        <div class="scen-badge">🛡️</div>
+        <div class="scen-tag">Conservative</div>
+        <div class="scen-name">Steady & Safe</div>
+        <div class="scen-desc">Low risk approach. Slower user acquisition, stable conversion. Ideal for capital-constrained teams.</div>
+        <div id="scenCons"></div>
+      </div>
+      <div class="scenario-card moderate">
+        <div class="scen-badge">⚡</div>
+        <div class="scen-tag">Moderate</div>
+        <div class="scen-name">Balanced Growth</div>
+        <div class="scen-desc">Realistic scale with measured investment. Targets healthy LTV/CAC and manageable burn rate.</div>
+        <div id="scenMod"></div>
+      </div>
+      <div class="scenario-card aggressive">
+        <div class="scen-badge">🚀</div>
+        <div class="scen-tag">Aggressive</div>
+        <div class="scen-name">Blitz Scaling</div>
+        <div class="scen-desc">High burn for fast market capture. Requires strong funding runway. High reward, high risk.</div>
+        <div id="scenAgg"></div>
+      </div>
+    </div>
+
+    <!-- RISK TABLE -->
+    <div class="health-panel">
+      <div class="sec-title">Scenario Risk Analysis</div>
+      <table class="risk-table">
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>Monthly Revenue</th>
+            <th>Net Profit</th>
+            <th>Break-Even</th>
+            <th>LTV/CAC</th>
+            <th>Risk Level</th>
+          </tr>
+        </thead>
+        <tbody id="riskTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="insights-panel">
+      <div class="sec-title">Key Business Insights</div>
+      <div id="insightsList"></div>
+    </div>
+
+    <!-- RECOMMENDATION -->
+    <div class="rec-panel">
+      <div class="rec-title">🌱 Strategic Recommendations</div>
+      <ul class="rec-items" id="recList"></ul>
+    </div>
+
+  </div><!-- /results -->
+
+  <div class="fin-footer">
+    Built for <strong>NutriAI</strong> · Financial model assumes 12-month churn = 5%/mo · LTV = ARPU ÷ Churn Rate · All figures in USD
+  </div>
+</div>
+
+<script>
+const fmt = (n, dec=0) => new Intl.NumberFormat('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}).format(n);
+const fmtM = (n) => n >= 1000000 ? '$'+fmt(n/1000000,2)+'M' : n >= 1000 ? '$'+fmt(n/1000,1)+'K' : '$'+fmt(n,0);
+const fmtP = (n, dec=1) => fmt(n,dec)+'%';
+const clamp = (v,min,max) => Math.min(Math.max(v,min),max);
+
+function computeModel(users, price, convRate, cacTotal, fixed, varPerUser, growthMult=1) {
+  const payingUsers = Math.round(users * (convRate/100));
+  const monthlyRevenue = payingUsers * price;
+  const yearlyRevenue = monthlyRevenue * 12;
+  const varCosts = users * varPerUser;
+  const newUsersMo = Math.round(cacTotal / (price * 3)); // assume CAC / 3mo LTV approx
+  const totalCosts = fixed + varCosts + cacTotal;
+  const netProfit = monthlyRevenue - totalCosts;
+  const grossMargin = monthlyRevenue > 0 ? ((monthlyRevenue - varCosts) / monthlyRevenue) * 100 : 0;
+  const churnRate = 0.05; // 5% monthly
+  const ltv = price / churnRate;
+  const cacPerUser = payingUsers > 0 ? cacTotal / Math.max(payingUsers * 0.1, 1) : cacTotal;
+  const ltvCacRatio = cacPerUser > 0 ? ltv / cacPerUser : 0;
+
+  // Break-even: months to cover fixed costs from margin
+  const monthlyMarginPerUser = price - varPerUser;
+  const totalMonthlyFixed = fixed + cacTotal;
+  const breakEvenUsers = monthlyMarginPerUser > 0 ? totalMonthlyFixed / monthlyMarginPerUser : Infinity;
+  const breakEvenMonths = payingUsers > 0 ? Math.ceil(breakEvenUsers / Math.max(payingUsers, 1)) : Infinity;
+
+  return {
+    users, payingUsers, price, convRate, cacTotal, fixed, varPerUser,
+    monthlyRevenue, yearlyRevenue, varCosts, totalCosts, netProfit,
+    grossMargin, ltv, cacPerUser, ltvCacRatio, churnRate,
+    breakEvenMonths: Math.min(breakEvenMonths, 120),
+    monthlyGrowth: growthMult
+  };
+}
+
+function scenarioLines(m) {
+  const profit = m.netProfit;
+  const cls = profit >= 0 ? 'pos' : 'neg';
+  return `
+    <div class="scen-line"><span class="scen-key">Monthly Revenue</span><span class="scen-val">${fmtM(m.monthlyRevenue)}</span></div>
+    <div class="scen-line"><span class="scen-key">Total Costs</span><span class="scen-val">${fmtM(m.totalCosts)}</span></div>
+    <div class="scen-line"><span class="scen-key">Net Profit</span><span class="scen-val ${cls}">${fmtM(m.netProfit)}</span></div>
+    <div class="scen-line"><span class="scen-key">Paying Users</span><span class="scen-val">${fmt(m.payingUsers)}</span></div>
+    <div class="scen-line"><span class="scen-key">LTV/CAC</span><span class="scen-val ${m.ltvCacRatio>=3?'pos':m.ltvCacRatio>=1?'warn':'neg'}">${fmt(m.ltvCacRatio,1)}x</span></div>
+    <div class="scen-line"><span class="scen-key">Break-Even</span><span class="scen-val">${m.breakEvenMonths >= 120 ? '120+ mo' : m.breakEvenMonths+' mo'}</span></div>
+  `;
+}
+
+function drawChart(base) {
+  const svg = document.getElementById('chartSvg');
+  svg.innerHTML = '';
+  const W = 800, H = 200, pad = {t:10,r:20,b:30,l:55};
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+  const months = 12;
+
+  // Project each month
+  const revData=[], costData=[], profData=[];
+  for(let i=1;i<=months;i++){
+    const growth = 1 + (0.04 * (i-1)); // 4% MoM user growth
+    const rev = base.monthlyRevenue * growth;
+    const cost = base.totalCosts * (1 + 0.02*(i-1));
+    revData.push(rev);
+    costData.push(cost);
+    profData.push(rev - cost);
+  }
+
+  const allVals = [...revData, ...costData, ...profData];
+  const minVal = Math.min(...allVals, 0);
+  const maxVal = Math.max(...allVals);
+  const range = maxVal - minVal || 1;
+
+  const xOf = i => pad.l + (i/(months-1))*pw;
+  const yOf = v => pad.t + ph - ((v - minVal)/range)*ph;
+
+  // Zero line
+  const y0 = yOf(0);
+  const zeroLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+  zeroLine.setAttribute('x1', pad.l); zeroLine.setAttribute('x2', pad.l+pw);
+  zeroLine.setAttribute('y1', y0); zeroLine.setAttribute('y2', y0);
+  zeroLine.setAttribute('stroke','#C8E6C9'); zeroLine.setAttribute('stroke-width','1');
+  zeroLine.setAttribute('stroke-dasharray','4,3');
+  svg.appendChild(zeroLine);
+
+  // Grid lines
+  for(let i=0;i<4;i++){
+    const y = pad.t + (i/3)*ph;
+    const gl = document.createElementNS('http://www.w3.org/2000/svg','line');
+    gl.setAttribute('x1',pad.l);gl.setAttribute('x2',pad.l+pw);
+    gl.setAttribute('y1',y);gl.setAttribute('y2',y);
+    gl.setAttribute('stroke','#E8F5E9');gl.setAttribute('stroke-width','1');
+    svg.appendChild(gl);
+    const val = maxVal - (i/3)*range;
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',pad.l-6);t.setAttribute('y',y+4);
+    t.setAttribute('text-anchor','end');t.setAttribute('font-size','8');t.setAttribute('fill','#7A9B77');
+    t.textContent = fmtM(val);
+    svg.appendChild(t);
+  }
+
+  // Month labels
+  [1,3,6,9,12].forEach(m => {
+    const x = xOf(m-1);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',x);t.setAttribute('y',H-pad.b+14);
+    t.setAttribute('text-anchor','middle');t.setAttribute('font-size','9');t.setAttribute('fill','#7A9B77');
+    t.textContent = 'Mo '+m;
+    svg.appendChild(t);
+  });
+
+  function makePath(data, color, width=2, dash='') {
+    const d = data.map((v,i) => `${i===0?'M':'L'}${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',d);p.setAttribute('fill','none');
+    p.setAttribute('stroke',color);p.setAttribute('stroke-width',width);
+    p.setAttribute('stroke-linejoin','round');p.setAttribute('stroke-linecap','round');
+    if(dash) p.setAttribute('stroke-dasharray',dash);
+    return p;
+  }
+
+  // Filled area for revenue
+  const areaD = revData.map((v,i) => `${i===0?'M':'L'}${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ')
+    + ` L${xOf(months-1).toFixed(1)},${yOf(0).toFixed(1)} L${xOf(0).toFixed(1)},${yOf(0).toFixed(1)} Z`;
+  const area = document.createElementNS('http://www.w3.org/2000/svg','path');
+  area.setAttribute('d',areaD);area.setAttribute('fill','rgba(67,160,71,.08)');
+  svg.appendChild(area);
+
+  svg.appendChild(makePath(costData,'#FF7043',2,'5,3'));
+  svg.appendChild(makePath(profData,'#1E88E5',1.5,'3,2'));
+  svg.appendChild(makePath(revData,'#2E7D32',2.5));
+
+  // Dots on revenue
+  revData.forEach((v,i) => {
+    if(i%2===0||i===months-1){
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',xOf(i));c.setAttribute('cy',yOf(v));
+      c.setAttribute('r','3');c.setAttribute('fill','#2E7D32');
+      svg.appendChild(c);
+    }
+  });
+}
+
+function generate_insights(m) {
+  const insights = [];
+
+  // Scalability
+  if(m.grossMargin > 70) insights.push({icon:'🟢',text:`<strong>Highly Scalable.</strong> Gross margin of ${fmtP(m.grossMargin)} exceeds the 70% SaaS benchmark, meaning each new subscriber significantly improves profitability.`});
+  else if(m.grossMargin > 50) insights.push({icon:'🟡',text:`<strong>Moderately Scalable.</strong> Gross margin of ${fmtP(m.grossMargin)} is acceptable but below the 70% SaaS ideal. Focus on reducing variable costs per user.`});
+  else insights.push({icon:'🔴',text:`<strong>Limited Scalability.</strong> Gross margin of ${fmtP(m.grossMargin)} is below the 50% warning zone. Variable costs are eroding potential gains.`});
+
+  // LTV/CAC
+  if(m.ltvCacRatio >= 3) insights.push({icon:'💚',text:`<strong>Excellent LTV/CAC of ${fmt(m.ltvCacRatio,1)}x.</strong> Investors look for 3x+. You're efficiently converting acquisition spend into lifetime value.`});
+  else if(m.ltvCacRatio >= 1) insights.push({icon:'🟡',text:`<strong>LTV/CAC of ${fmt(m.ltvCacRatio,1)}x needs improvement.</strong> You recover acquisition cost, but the buffer is thin. Target 3x+ for healthy unit economics.`});
+  else insights.push({icon:'🔴',text:`<strong>LTV/CAC of ${fmt(m.ltvCacRatio,1)}x is critical.</strong> You're spending more to acquire users than they're worth. Pause aggressive acquisition until this is fixed.`});
+
+  // Profitability
+  if(m.netProfit > 0) insights.push({icon:'💰',text:`<strong>Currently Profitable</strong> at ${fmtM(m.netProfit)}/month. Annual run-rate profit of ${fmtM(m.netProfit*12)}. Reinvest surplus into product and marketing.`});
+  else insights.push({icon:'🔻',text:`<strong>Operating at a Loss</strong> of ${fmtM(Math.abs(m.netProfit))}/month. Runway is finite — prioritize reaching break-even through conversion optimization or cost reduction.`});
+
+  // Conversion
+  if(m.convRate < 3) insights.push({icon:'⚠️',text:`<strong>Low Conversion Rate (${fmtP(m.convRate)}).</strong> Even small improvements here have an outsized revenue impact. A/B test pricing, trial length, and onboarding flows.`});
+  else if(m.convRate > 10) insights.push({icon:'🌟',text:`<strong>Strong Conversion Rate (${fmtP(m.convRate)}).</strong> You're effectively converting free users to paying subscribers — a major competitive advantage.`});
+  else insights.push({icon:'📊',text:`<strong>Conversion Rate (${fmtP(m.convRate)}) is in a healthy range.</strong> Benchmark against industry average of 5–8% for freemium SaaS apps.`});
+
+  // CAC payback
+  const cacPayback = m.price > 0 ? (m.cacPerUser / m.price).toFixed(1) : 'N/A';
+  insights.push({icon:'📅',text:`<strong>CAC Payback Period: ~${cacPayback} months.</strong> Best-in-class SaaS targets under 12 months. This measures how quickly you recover the cost of acquiring each customer.`});
+
+  return insights;
+}
+
+function generate_recs(m) {
+  const recs = [];
+  if(m.convRate < 8) recs.push(`Optimize your free-to-paid funnel. A ${fmtP(2)} lift in conversion rate would add ~${fmtM(m.users * 0.02 * m.price)}/month in revenue with zero additional user acquisition cost.`);
+  if(m.ltvCacRatio < 3) recs.push(`Reduce CAC by investing in organic channels: SEO, content about nutrition & wellness, and referral programs. Word-of-mouth in health apps can have 3–5x better CAC than paid ads.`);
+  if(m.varCost > 1.5) recs.push(`Your variable cost per user (${fmtM(m.varCost)}) is high — likely AI API and cloud spend. Optimize model calls with caching, batch processing, and smaller on-device models for common tasks.`);
+  recs.push(`Introduce an annual plan at a 15–20% discount. This improves cash flow, reduces churn (annual users churn 50–70% less), and boosts LTV significantly.`);
+  recs.push(`Expand with a premium tier (e.g., $24.99/mo) including AI meal planning, 1:1 nutritionist access, or lab integrations. Even 10% of paying users upgrading meaningfully improves ARPU.`);
+  if(m.netProfit < 0) recs.push(`Priority: reach break-even before scaling acquisition. Focus the next 90 days on conversion rate optimization and reducing fixed costs — not user growth.`);
+  else recs.push(`With positive unit economics, now is the right time to reinvest 30–40% of profit into performance marketing. Double down on what's working in your acquisition channels.`);
+  return recs;
+}
+
+function calculate() {
+  const users = parseFloat(document.getElementById('totalUsers').value) || 5000;
+  const price = parseFloat(document.getElementById('monthlyPrice').value) || 12.99;
+  const conv = parseFloat(document.getElementById('convRate').value) || 8;
+  const cac = parseFloat(document.getElementById('cac').value) || 8000;
+  const fixed = parseFloat(document.getElementById('fixedCosts').value) || 15000;
+  const varC = parseFloat(document.getElementById('varCost').value) || 0.80;
+
+  const base = computeModel(users, price, conv, cac, fixed, varC);
+
+  // Scenarios
+  const cons = computeModel(
+    Math.round(users * 0.6), price * 0.9, Math.max(conv - 2, 1),
+    cac * 0.5, fixed * 0.85, varC
+  );
+  const mod = computeModel(
+    Math.round(users * 1.4), price, conv,
+    cac * 1.2, fixed, varC * 0.9
+  );
+  const agg = computeModel(
+    users * 3, price * 1.1, Math.min(conv + 3, 25),
+    cac * 3, fixed * 1.3, varC * 1.1
+  );
+
+  // Update metrics
+  document.getElementById('mRevenue').textContent = fmtM(base.monthlyRevenue);
+  document.getElementById('mRevenueSub').textContent = fmt(base.payingUsers) + ' paying users';
+  document.getElementById('aRevenue').textContent = fmtM(base.yearlyRevenue);
+  document.getElementById('aRevenueSub').textContent = 'Annualized run rate';
+  document.getElementById('totalCosts').textContent = fmtM(base.totalCosts);
+  document.getElementById('totalCostsSub').textContent = `Fixed ${fmtM(fixed)} · Var ${fmtM(base.varCosts)} · CAC ${fmtM(cac)}`;
+
+  const profCard = document.getElementById('profitCard');
+  profCard.className = 'metric-card ' + (base.netProfit >= 0 ? 'green' : 'red');
+  document.getElementById('netProfit').textContent = fmtM(base.netProfit);
+  document.getElementById('netProfitSub').textContent = base.netProfit >= 0 ? 'Business is profitable ✓' : 'Operating at a loss';
+
+  document.getElementById('breakEven').textContent = base.breakEvenMonths >= 120 ? '120+ mo' : base.breakEvenMonths + ' mo';
+  document.getElementById('breakEvenSub').textContent = base.breakEvenMonths <= 18 ? 'Strong payback timeline' : 'Consider cost optimization';
+
+  const ltvCacRatio = base.ltvCacRatio;
+  document.getElementById('ltvCac').textContent = fmt(ltvCacRatio, 1) + 'x';
+  document.getElementById('ltvCacSub').textContent = `LTV ${fmtM(base.ltv)} · CAC/user ~${fmtM(base.cacPerUser)}`;
+
+  // Status badge
+  const badge = document.getElementById('statusBadge');
+  const st = document.getElementById('statusText');
+  if(base.netProfit > 0){
+    badge.className = 'status-badge profitable';
+    st.textContent = 'Business Profitable';
+  } else if(base.netProfit > -2000){
+    badge.className = 'status-badge breakeven';
+    st.textContent = 'Near Break-Even';
+  } else {
+    badge.className = 'status-badge loss';
+    st.textContent = 'Operating at a Loss';
+  }
+
+  // Health bars (animated after short delay)
+  setTimeout(() => {
+    const gm = clamp(base.grossMargin, 0, 100);
+    document.getElementById('bar1').style.width = gm + '%';
+    document.getElementById('val1').textContent = fmtP(gm);
+
+    const convPct = clamp(conv * 4, 0, 100); // visual scale
+    document.getElementById('bar2').style.width = convPct + '%';
+    document.getElementById('val2').textContent = fmt(base.payingUsers) + ' users';
+
+    const ltvPct = clamp((ltvCacRatio / 6) * 100, 0, 100);
+    document.getElementById('bar3').style.width = ltvPct + '%';
+    document.getElementById('val3').textContent = fmt(ltvCacRatio,1) + 'x';
+
+    const revGrowthPot = clamp(((100 - conv) / 100) * 80, 0, 100);
+    document.getElementById('bar4').style.width = revGrowthPot + '%';
+    document.getElementById('val4').textContent = fmtP(revGrowthPot);
+
+    const costEff = clamp((base.monthlyRevenue / Math.max(base.totalCosts,1)) * 50, 0, 100);
+    document.getElementById('bar5').style.width = costEff + '%';
+    document.getElementById('val5').textContent = fmtP(costEff);
+  }, 100);
+
+  // Draw chart
+  drawChart(base);
+
+  // Scenarios
+  document.getElementById('scenCons').innerHTML = scenarioLines(cons);
+  document.getElementById('scenMod').innerHTML = scenarioLines(mod);
+  document.getElementById('scenAgg').innerHTML = scenarioLines(agg);
+
+  // Risk table
+  const riskRender = (m, label, risk) => {
+    const cls = m.netProfit >= 0 ? 'pos' : 'neg';
+    const riskClass = risk === 'Low' ? 'risk-low' : risk === 'Medium' ? 'risk-med' : 'risk-high';
+    return `<tr>
+      <td><strong>${label}</strong></td>
+      <td>${fmtM(m.monthlyRevenue)}</td>
+      <td class="${cls}">${fmtM(m.netProfit)}</td>
+      <td>${m.breakEvenMonths >= 120 ? '120+ mo' : m.breakEvenMonths + ' mo'}</td>
+      <td>${fmt(m.ltvCacRatio,1)}x</td>
+      <td><span class="risk-pill ${riskClass}">${risk}</span></td>
+    </tr>`;
+  };
+  document.getElementById('riskTableBody').innerHTML =
+    riskRender(cons,'Conservative','Low') +
+    riskRender(mod,'Moderate','Medium') +
+    riskRender(agg,'Aggressive','High');
+
+  // Insights
+  const insights = generate_insights(base);
+  document.getElementById('insightsList').innerHTML = insights.map(i =>
+    `<div class="insight-item"><div class="insight-icon">${i.icon}</div><div class="insight-text">${i.text}</div></div>`
+  ).join('');
+
+  // Recommendations
+  const recs = generate_recs(base);
+  document.getElementById('recList').innerHTML = recs.map(r => `<li>${r}</li>`).join('');
+
+  // Show results
+  const resultsEl = document.getElementById('results');
+  resultsEl.style.display = 'block';
+  setTimeout(() => resultsEl.scrollIntoView({behavior:'smooth', block:'start'}), 100);
+}
+
+// Auto-run on load
+window.addEventListener('load', () => setTimeout(calculate, 400));
+</script>
+</body>
+</html>
